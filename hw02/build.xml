@@ -1,0 +1,83 @@
+<project name="cs680-hw02" basedir="." default="test" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property name="src.main" value="src/main"/>
+  <property name="src.test" value="src/test"/>
+  <property name="bin.main" value="build/main"/>
+  <property name="bin.test" value="build/test"/>
+  <property name="lib.dir"  value="lib"/>
+  <property name="ivy.install.version" value="2.5.3"/>
+
+  <target name="bootstrap-ivy" unless="ivy.available">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+         dest="${lib.dir}/ivy-${ivy.install.version}.jar"
+         skipexisting="true"/>
+    <path id="ivy.classpath">
+      <fileset dir="${lib.dir}" includes="ivy-*.jar"/>
+    </path>
+    <taskdef uri="antlib:org.apache.ivy.ant"
+             resource="org/apache/ivy/ant/antlib.xml"
+             classpathref="ivy.classpath"/>
+  </target>
+
+ 
+  <target name="init" depends="bootstrap-ivy">
+    <mkdir dir="${bin.main}"/>
+    <mkdir dir="${bin.test}"/>
+    <mkdir dir="${lib.dir}"/>
+    <mkdir dir="test/reports"/>
+
+    <path id="cp">
+      <pathelement location="${bin.main}"/>
+      <pathelement location="${bin.test}"/>
+      <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+  </target>
+
+  
+  <target name="resolve" depends="init">
+    <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  
+  <target name="compile" depends="resolve">
+    <javac srcdir="${src.main}" destdir="${bin.main}" includeantruntime="false">
+      <classpath refid="cp"/>
+      <include name="hw02/**/*.java"/>
+    </javac>
+    <javac srcdir="${src.test}" destdir="${bin.test}" includeantruntime="false">
+      <classpath refid="cp"/>
+      <include name="hw02/**/*Test.java"/>
+    </javac>
+  </target>
+
+  
+  <target name="test" depends="compile">
+    <taskdef uri="junitlauncher"
+             resource="org/apache/tools/ant/taskdefs/optional/junitlauncher/antlib.xml"/>
+    <junitlauncher haltOnFailure="true" printSummary="true">
+      <classpath refid="cp"/>
+      <testclasses outputdir="test/reports">
+        <fileset dir="${bin.test}">
+          <include name="hw02/*Test.class"/>
+        </fileset>
+      </testclasses>
+      <listener type="legacy-plain" sendSysOut="true"/>
+      <listener type="legacy-xml"/>
+    </junitlauncher>
+  </target>
+
+  <target name="build" depends="test"/>
+
+
+  <target name="clean">
+    <delete dir="${bin.main}"    quiet="true" failonerror="false"/>
+    <delete dir="${bin.test}"    quiet="true" failonerror="false"/>
+    <delete dir="test/reports"   quiet="true" failonerror="false"/>
+  </target>
+
+  <target name="clean-cache" depends="bootstrap-ivy">
+    <ivy:cleancache/>
+  </target>
+
+</project>

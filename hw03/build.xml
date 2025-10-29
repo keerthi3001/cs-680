@@ -1,0 +1,88 @@
+<project name="HW03" default="test" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  
+  <property name="src.main"   value="src/main"/>
+  <property name="src.test"   value="src/test"/>
+  <property name="build.main" value="build/main"/>
+  <property name="build.test" value="build/test"/>
+  <property name="lib.dir"    value="lib"/>
+  <property name="report.dir" value="build/reports"/>
+
+  
+  <property name="ivy.version" value="2.5.1"/>
+  <property name="ivy.jar"     value="${lib.dir}/ivy-${ivy.version}.jar"/>
+
+  
+  <available file="${ivy.jar}" property="ivy.present"/>
+
+  
+  <target name="init">
+    <mkdir dir="${build.main}"/>
+    <mkdir dir="${build.test}"/>
+    <mkdir dir="${lib.dir}"/>
+    <mkdir dir="${report.dir}"/>
+  </target>
+
+ 
+  <target name="download-ivy" depends="init" unless="ivy.present">
+    <echo message="Downloading Ivy ${ivy.version} to ${ivy.jar} (first run only)"/>
+    <get
+      src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
+      dest="${ivy.jar}" usetimestamp="true"/>
+  </target>
+
+  
+  <target name="ivy-init" depends="download-ivy">
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant"
+             classpath="${ivy.jar}"/>
+  </target>
+
+  
+  <target name="resolve" depends="ivy-init" description="Download jars listed in ivy.xml">
+    <ivy:retrieve pattern="${lib.dir}/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    <pathelement location="${build.main}"/>
+    <pathelement location="${build.test}"/>
+  </path>
+
+  
+  <target name="compile" depends="resolve">
+    <javac srcdir="${src.main}" destdir="${build.main}" includeantruntime="false" debug="true">
+      <classpath refid="classpath"/>
+      <include name="**/*.java"/>
+    </javac>
+    <javac srcdir="${src.test}" destdir="${build.test}" includeantruntime="false" debug="true">
+      <classpath refid="classpath"/>
+      <include name="**/*.java"/>
+    </javac>
+  </target>
+
+  
+  <target name="test" depends="compile">
+   
+    <taskdef uri="junitlauncher"
+             resource="org/apache/tools/ant/taskdefs/optional/junitlauncher/antlib.xml"/>
+    <junitlauncher printSummary="true" haltOnFailure="true">
+      <classpath refid="classpath"/>
+      <testclasses outputdir="${report.dir}">
+        <fileset dir="${build.test}" includes="**/*Test.class"/>
+      </testclasses>
+      <listener type="legacy-plain" sendSysOut="true"/>
+      <listener type="legacy-xml"/>
+    </junitlauncher>
+  </target>
+
+  
+  <target name="build" depends="test"/>
+
+  
+  <target name="clean">
+    <delete dir="build"/>
+    <delete dir="lib"/>
+  </target>
+</project>
