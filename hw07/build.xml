@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hw07" default="test" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <!-- ===== Paths & Props ===== -->
+  <property name="src.main.dir"   value="src/main"/>
+  <property name="src.test.dir"   value="src/test"/>
+  <property name="build.dir"      value="build"/>
+  <property name="build.main.dir" value="${build.dir}/main"/>
+  <property name="build.test.dir" value="${build.dir}/test"/>
+  <property name="reports.dir"    value="${build.dir}/reports"/>
+  <property name="lib.dir"        value="lib"/>
+  <property name="ivy.jar"        value="${lib.dir}/ivy-2.5.2.jar"/>
+
+  <!-- ===== Clean ===== -->
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <delete dir="${lib.dir}"/>
+  </target>
+
+  <!-- ===== Ivy bootstrap + bind ivy tasks ===== -->
+  <target name="bootstrap-ivy">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+         dest="${ivy.jar}" skipexisting="true"/>
+    <taskdef uri="antlib:org.apache.ivy.ant"
+             resource="org/apache/ivy/ant/antlib.xml">
+      <classpath>
+        <pathelement location="${ivy.jar}"/>
+      </classpath>
+    </taskdef>
+  </target>
+
+  <!-- ===== Resolve deps to Ivy cache (no local copy) ===== -->
+  <target name="resolve" depends="bootstrap-ivy">
+    <ivy:settings/>
+    <ivy:cachepath pathid="ivy.classpath" conf="default"/>
+  </target>
+
+  <!-- ===== Build dirs ===== -->
+  <target name="init">
+    <mkdir dir="${build.main.dir}"/>
+    <mkdir dir="${build.test.dir}"/>
+    <mkdir dir="${reports.dir}"/>
+  </target>
+
+  <!-- ===== Compile main ===== -->
+  <target name="compile-main" depends="resolve,init">
+    <javac srcdir="${src.main.dir}" destdir="${build.main.dir}"
+           includeantruntime="false" source="17" target="17" encoding="UTF-8" debug="true">
+      <classpath>
+        <path refid="ivy.classpath"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- ===== Compile tests ===== -->
+  <target name="compile-test" depends="compile-main">
+    <javac srcdir="${src.test.dir}" destdir="${build.test.dir}"
+           includeantruntime="false" source="17" target="17" encoding="UTF-8" debug="true"
+           sourcepath="${src.main.dir}">
+      <classpath>
+        <pathelement location="${build.main.dir}"/>
+        <path refid="ivy.classpath"/>
+      </classpath>
+      <compilerarg value="-Xlint:all"/>
+    </javac>
+  </target>
+
+  <!-- ===== Build convenience (compiles everything) ===== -->
+  <target name="build" depends="compile-test"/>
+
+  <!-- ===== Run JUnit 5 (no listeners; broad compatibility) ===== -->
+  <target name="test" depends="compile-test">
+    <junitlauncher printsummary="withOutAndErr" haltOnFailure="false">
+      <classpath>
+        <pathelement location="${build.main.dir}"/>
+        <pathelement location="${build.test.dir}"/>
+        <path refid="ivy.classpath"/>
+      </classpath>
+      <testclasses>
+        <fileset dir="${build.test.dir}">
+          <include name="**/*Test.class"/>
+          <include name="**/*Tests.class"/>
+        </fileset>
+      </testclasses>
+    </junitlauncher>
+    <echo>Tests executed. (HTML report disabled for maximum Ant compatibility)</echo>
+  </target>
+
+  <!-- ===== Alias so `ant compile` also builds everything ===== -->
+  <target name="compile" depends="build"/>
+</project>
