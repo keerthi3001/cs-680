@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="cs680-hw10" default="test">
+
+    <!-- directories -->
+    <property name="src"       location="src/main" />
+    <property name="src.test"  location="src/test" />
+    <property name="bin"       location="build/main" />
+    <property name="bin.test"  location="build/test" />
+    <property name="lib"       location="lib" />
+
+    <!-- 1. Download required JARs directly (no Ivy tasks) -->
+    <target name="download-jars">
+        <mkdir dir="${lib}" />
+
+        <!-- JUnit Jupiter -->
+        <get src="https://repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.11.1/junit-jupiter-api-5.11.1.jar"
+             dest="${lib}/junit-jupiter-api-5.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.11.1/junit-jupiter-engine-5.11.1.jar"
+             dest="${lib}/junit-jupiter-engine-5.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.11.1/junit-jupiter-params-5.11.1.jar"
+             dest="${lib}/junit-jupiter-params-5.11.1.jar" usetimestamp="true"/>
+
+        <!-- JUnit Platform -->
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.11.1/junit-platform-commons-1.11.1.jar"
+             dest="${lib}/junit-platform-commons-1.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.11.1/junit-platform-engine-1.11.1.jar"
+             dest="${lib}/junit-platform-engine-1.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.11.1/junit-platform-launcher-1.11.1.jar"
+             dest="${lib}/junit-platform-launcher-1.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-api/1.11.1/junit-platform-suite-api-1.11.1.jar"
+             dest="${lib}/junit-platform-suite-api-1.11.1.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-runner/1.11.1/junit-platform-runner-1.11.1.jar"
+             dest="${lib}/junit-platform-runner-1.11.1.jar" usetimestamp="true"/>
+
+        <!-- Dependencies -->
+        <get src="https://repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar"
+             dest="${lib}/apiguardian-api-1.1.2.jar" usetimestamp="true"/>
+        <get src="https://repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar"
+             dest="${lib}/opentest4j-1.3.0.jar" usetimestamp="true"/>
+    </target>
+
+    <!-- 2. Prepare classpath & build dirs -->
+    <target name="init" depends="download-jars">
+        <mkdir dir="${bin}" />
+        <mkdir dir="${bin.test}" />
+
+        <path id="classpath">
+            <pathelement location="${bin}" />
+            <pathelement location="${bin.test}" />
+            <fileset dir="${lib}" includes="*.jar" />
+        </path>
+
+        <echo message="CLASSPATH: ${toString:classpath}" />
+    </target>
+
+    <!-- 3. Compile main & test code -->
+    <target name="compile" depends="init">
+        <javac srcdir="${src}" destdir="${bin}" includeantruntime="false">
+            <classpath refid="classpath" />
+            <include name="cs680/hw10/*.java" />
+        </javac>
+
+        <javac srcdir="${src.test}" destdir="${bin.test}" includeantruntime="false">
+            <classpath refid="classpath" />
+            <include name="cs680/hw10/*.java" />
+        </javac>
+    </target>
+
+    <!-- 4. Run JUnit 5 tests -->
+    <target name="test" depends="compile">
+        <junitlauncher haltOnFailure="true" printSummary="true">
+            <classpath refid="classpath" />
+            <testclasses outputdir="${bin.test}">
+                <fileset dir="${bin.test}">
+                    <include name="cs680/hw10/*Test.class" />
+                </fileset>
+            </testclasses>
+            <listener type="legacy-plain" sendSysOut="true"/>
+            <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+        </junitlauncher>
+    </target>
+
+    <!-- 5. Clean compiled output -->
+    <target name="clean">
+        <delete dir="${bin}" failonerror="false" />
+        <delete dir="${bin.test}" failonerror="false" />
+    </target>
+
+</project>

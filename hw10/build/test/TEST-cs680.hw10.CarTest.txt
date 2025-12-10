@@ -1,0 +1,6 @@
+Testcase: cs680.hw10.CarTest
+Test: testPriceComparator() took 5 milli sec(s)
+Test: testMileageComparator() took 0 milli sec(s)
+Test: testYearComparator() took 0 milli sec(s)
+Test: testParetoDominance() took 0 milli sec(s)
+Tests run: 4, Failures: 0, Skipped: 0, Aborted: 0, Time elapsed: 11 milli sec(s)
